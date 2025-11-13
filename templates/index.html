@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Prediksi Risiko Kardiovaskular - PreXa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --light-bg: #f8fafc;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-bg);
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: var(--card-shadow);
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+
+        .result-card {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .probability-bar {
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+            background-color: #e5e7eb;
+        }
+
+        .probability-fill {
+            height: 100%;
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .risk-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .risk-RENDAH { background-color: #d1fae5; color: #065f46; }
+        .risk-SEDANG { background-color: #fed7aa; color: #92400e; }
+        .risk-TINGGI { background-color: #fecaca; color: #991b1b; }
+        .risk-SANGAT_TINGGI { background-color: #991b1b; color: white; }
+
+        .vital-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .vital-card:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+
+        .vital-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .vital-unit {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .advice-card {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .model-info {
+            font-size: 0.875rem;
+            color: white;
+            opacity: 0.9;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .section-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 70%;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .condition-badge {
+            font-size: 1.1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .condition-NORMAL { background-color: #d1fae5; color: #065f46; }
+        .condition-BORDERLINE_HYPERTENSION { background-color: #fed7aa; color: #92400e; }
+        .condition-HYPERTENSION_STAGE1 { background-color: #fef3c7; color: #92400e; }
+        .condition-HYPERTENSION_STAGE2 { background-color: #fecaca; color: #991b1b; }
+        .condition-TACHYCARDIA { background-color: #fce7f3; color: #9d174d; }
+        .condition-BRADYCARDIA { background-color: #e0e7ff; color: #3730a3; }
+
+        .urgency-badge {
+            font-size: 0.9rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+
+        .urgency-low { background-color: #d1fae5; color: #065f46; }
+        .urgency-medium { background-color: #fed7aa; color: #92400e; }
+        .urgency-high { background-color: #fecaca; color: #991b1b; }
+
+        .alert-high-risk {
+            animation: pulse 2s infinite;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .bmi-indicator {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            margin-left: 0.5rem;
+        }
+
+        .bmi-underweight { background-color: #93c5fd; color: #1e3a8a; }
+        .bmi-normal { background-color: #86efac; color: #166534; }
+        .bmi-overweight { background-color: #fde047; color: #854d0e; }
+        .bmi-obese { background-color: #fca5a5; color: #991b1b; }
+
+        @media (max-width: 768px) {
+            .vital-value {
+                font-size: 1.5rem;
+            }
+            
+            .section-title {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-heart-pulse-fill me-2"></i>
+                PreXa - Cardiovascular Risk Predictor
+            </span>
+            <div class="model-info" id="modelInfo">Memuat informasi model...</div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <!-- Hero Section -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h1 class="display-4 fw-bold mb-3">Sistem Prediksi Pola Risiko Kardiovaskular</h1>
+                <p class="lead text-muted">Model Hybrid Machine Learning untuk Deteksi Dini Gangguan Tekanan Darah dan Denyut Jantung</p>
+                <div class="alert alert-warning d-inline-block" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Peringatan:</strong> Sistem ini hanya untuk skrining/deteksi dini, bukan alat diagnosis. 
+                    Jika hasil menunjukkan risiko, segera periksa ke tenaga kesehatan.
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Form -->
+        <div class="row mb-5">
+            <div class="col-lg-10 mx-auto">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h4 class="card-title mb-4">
+                            <i class="bi bi-clipboard2-pulse me-2"></i>
+                            Masukkan Data Pasien
+                        </h4>
+                        <form id="predictionForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 class="mb-3 text-primary">
+                                        <i class="bi bi-heart-pulse me-2"></i>
+                                        Data Vital
+                                    </h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="systole" class="form-label">Tekanan Sistolik *</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="systole" min="60" max="250" required>
+                                                <span class="input-group-text">mmHg</span>
+                                            </div>
+                                            <div class="form-text">
+                                                <small>
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Normal: 90-119 mmHg | Elevated: 120-129 mmHg | Hipertensi: ≥130 mmHg
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="diastole" class="form-label">Tekanan Diastolik *</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="diastole" min="30" max="150" required>
+                                                <span class="input-group-text">mmHg</span>
+                                            </div>
+                                            <div class="form-text">
+                                                <small>
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Normal: 60-79 mmHg | Elevated: 80-89 mmHg | Hipertensi: ≥90 mmHg
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="heartRate" class="form-label">Denyut Jantung *</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="heartRate" min="30" max="180" required>
+                                                <span class="input-group-text">bpm</span>
+                                            </div>
+                                            <div class="form-text">
+                                                <small>
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Normal: 60-100 bpm | Bradycardia: &lt;60 bpm | Tachycardia: &gt;100 bpm
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="temperature" class="form-label">Suhu Tubuh *</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="temperature" min="35.0" max="40.0" step="0.1" value="36.5" required>
+                                                <span class="input-group-text">°C</span>
+                                            </div>
+                                            <div class="form-text">
+                                                <small>
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Normal: 36.1-37.2°C | Demam: &gt;37.5°C | Hipotermia: &lt;36.0°C
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <h5 class="mb-3 text-primary">
+                                        <i class="bi bi-person me-2"></i>
+                                        Data Lifestyle & Demografi
+                                    </h5>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="weight" class="form-label">Berat Badan (kg)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="weight" min="30" max="200" step="0.1" value="70">
+                                                <span class="input-group-text">kg</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="height" class="form-label">Tinggi Badan (cm)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="height" min="100" max="220" step="0.1" value="170">
+                                                <span class="input-group-text">cm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="age" class="form-label">Usia</label>
+                                        <input type="number" class="form-control" id="age" min="18" max="100" value="35">
+                                        <div class="form-text">
+                                            <small>Usia mempengaruhi risiko kardiovaskular</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Status Merokok</label>
+                                        <select class="form-select" id="smokingStatus">
+                                            <option value="never">Tidak Pernah Merokok</option>
+                                            <option value="former">Mantan Perokok</option>
+                                            <option value="current">Perokok Aktif</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Aktivitas Fisik</label>
+                                        <select class="form-select" id="activeLifestyle">
+                                            <option value="true">Aktif (Olahraga teratur)</option>
+                                            <option value="false">Sedentari (Kurang aktivitas)</option>
+                                        </select>
+                                        <div class="form-text">
+                                            <small>Aktivitas fisik teratur mengurangi risiko kardiovaskular</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- BMI Display -->
+                                    <div class="alert alert-light" id="bmiDisplay">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>BMI: <strong id="bmiValue">-</strong></span>
+                                            <span class="bmi-indicator" id="bmiCategory">-</span>
+                                        </div>
+                                        <small class="text-muted">BMI akan terhitung otomatis</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-cpu me-2"></i>
+                                    Analisis Risiko Komprehensif dengan AI
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Sedang menganalisis data dengan model Hybrid AI...</p>
+            <small class="text-muted">Model Hybrid SVM + Random Forest dengan akurasi 94.9%</small>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="result-card">
+            <!-- Vital Signs Display -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="section-title">Data Pasien</h3>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="vital-card">
+                        <i class="bi bi-arrow-up-right feature-icon"></i>
+                        <div class="vital-value" id="displaySystole">-</div>
+                        <div class="vital-unit">Sistolik (mmHg)</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="vital-card">
+                        <i class="bi bi-arrow-down-right feature-icon"></i>
+                        <div class="vital-value" id="displayDiastole">-</div>
+                        <div class="vital-unit">Diastolik (mmHg)</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="vital-card">
+                        <i class="bi bi-heart-pulse feature-icon"></i>
+                        <div class="vital-value" id="displayHeartRate">-</div>
+                        <div class="vital-unit">Denyut Jantung (bpm)</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="vital-card">
+                        <i class="bi bi-thermometer feature-icon"></i>
+                        <div class="vital-value" id="displayTemperature">-</div>
+                        <div class="vital-unit">Suhu (°C)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prediction Result -->
+            <div class="row mb-4">
+                <div class="col-lg-10 mx-auto">
+                    <div class="card" id="predictionCard">
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                <h3 class="card-title mb-3">Hasil Prediksi Risiko Kardiovaskular</h3>
+                                
+                                <div class="mb-3">
+                                    <span class="condition-badge" id="conditionBadge">-</span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-center align-items-center mb-3">
+                                    <h4 class="me-3" id="predictionResult">-</h4>
+                                    <span class="risk-indicator" id="riskResult">-</span>
+                                </div>
+                                
+                                <div class="text-muted mb-3">
+                                    <i class="bi bi-graph-up me-1"></i>
+                                    Tingkat Kepercayaan Model: <strong id="confidenceResult">-</strong>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="bi bi-chat-square-text me-2"></i>
+                                    <span id="riskDescription">-</span>
+                                </div>
+                            </div>
+
+                            <!-- Multiple Conditions Probability -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">
+                                    <i class="bi bi-bar-chart-line-fill me-2"></i>
+                                    Distribusi Probabilitas Berbagai Kondisi
+                                </h5>
+                                <p class="text-muted mb-3">
+                                    Model AI memberikan probabilitas untuk berbagai kondisi kardiovaskular berdasarkan data input:
+                                </p>
+                                <div id="multipleProbabilityChart"></div>
+                            </div>
+
+                            <!-- Risk Distribution Analysis -->
+                            <div class="mb-4" id="riskDistributionSection">
+                                <h5 class="mb-3">
+                                    <i class="bi bi-pie-chart-fill me-2"></i>
+                                    Analisis Distribusi Risiko
+                                </h5>
+                                <div class="row" id="riskDistributionCards">
+                                    <!-- Risk distribution cards will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advice Section -->
+            <div class="row mb-4">
+                <div class="col-lg-10 mx-auto">
+                    <div class="card advice-card" id="adviceCard">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Rekomendasi Kesehatan & Tindakan
+                                <span class="urgency-badge float-end" id="urgencyBadge">-</span>
+                            </h5>
+                            
+                            <div class="mb-4">
+                                <h6 id="adviceTitle" class="text-primary mb-2">-</h6>
+                                <p id="adviceDescription" class="card-text mb-3">-</p>
+                            </div>
+                            
+                            <h6 class="mt-4 mb-2">
+                                <i class="bi bi-list-check me-2"></i>
+                                Tindakan yang Disarankan:
+                            </h6>
+                            <ul id="recommendationsList" class="list-group list-group-flush"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lifestyle & Risk Factors -->
+            <div class="row mb-4">
+                <div class="col-lg-10 mx-auto">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="bi bi-clipboard2-pulse me-2"></i>
+                                Analisis Faktor Risiko & Gaya Hidup
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Faktor Risiko Teridentifikasi:</h6>
+                                    <div id="riskFactors" class="list-group list-group-flush mb-3"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Profil Gaya Hidup:</h6>
+                                    <div id="lifestyleProfile" class="list-group list-group-flush"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical Disclaimer -->
+            <div class="row mb-4">
+                <div class="col-lg-10 mx-auto">
+                    <div class="alert alert-warning" id="medicalDisclaimerAlert">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Peringatan Medis
+                        </h6>
+                        <p class="mb-0" id="medicalDisclaimer">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <button class="btn btn-outline-primary btn-lg" onclick="newAnalysis()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Analisis Baru
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                <i class="bi bi-heart-pulse-fill text-danger me-2"></i>
+                PreXa - Cardiovascular Risk Prediction System | 
+                Hybrid SVM + Random Forest Model | Accuracy: 94.9%
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Condition display names
+        const conditionDisplayNames = {
+            'NORMAL': 'Normal',
+            'BORDERLINE_HYPERTENSION': 'Borderline Hypertension', 
+            'HYPERTENSION_STAGE1': 'Hipertensi Stage 1',
+            'HYPERTENSION_STAGE2': 'Hipertensi Stage 2',
+            'TACHYCARDIA': 'Tachycardia',
+            'BRADYCARDIA': 'Bradycardia'
+        };
+
+        // Color mapping for conditions
+        const conditionColors = {
+            'NORMAL': '#10b981',
+            'BORDERLINE_HYPERTENSION': '#f59e0b',
+            'HYPERTENSION_STAGE1': '#f97316', 
+            'HYPERTENSION_STAGE2': '#ef4444',
+            'TACHYCARDIA': '#ec4899',
+            'BRADYCARDIA': '#6366f1'
+        };
+
+        // Calculate BMI function
+        function calculateBMI(weight, height) {
+            // Convert height from cm to meters
+            const heightInMeters = height / 100;
+            return weight / (heightInMeters * heightInMeters);
+        }
+
+        // Get BMI category
+        function getBMICategory(bmi) {
+            if (bmi < 18.5) return { category: 'Underweight', class: 'bmi-underweight' };
+            if (bmi < 25) return { category: 'Normal', class: 'bmi-normal' };
+            if (bmi < 30) return { category: 'Overweight', class: 'bmi-overweight' };
+            return { category: 'Obese', class: 'bmi-obese' };
+        }
+
+        // Update BMI display
+        function updateBMIDisplay() {
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            
+            if (weight && height) {
+                const bmi = calculateBMI(weight, height);
+                const bmiCategory = getBMICategory(bmi);
+                
+                document.getElementById('bmiValue').textContent = bmi.toFixed(1);
+                document.getElementById('bmiCategory').textContent = bmiCategory.category;
+                document.getElementById('bmiCategory').className = `bmi-indicator ${bmiCategory.class}`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load model info
+            fetch('/model-info')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('modelInfo').textContent = 'Model tidak tersedia';
+                    } else {
+                        document.getElementById('modelInfo').textContent = 
+                            `Model: ${data.model_name} | Akurasi: ${data.accuracy} | Strategy: ${data.strategy}`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('modelInfo').textContent = 'Gagal memuat informasi model';
+                });
+
+            // Update BMI when weight or height changes
+            document.getElementById('weight').addEventListener('input', updateBMIDisplay);
+            document.getElementById('height').addEventListener('input', updateBMIDisplay);
+            
+            // Initial BMI calculation
+            updateBMIDisplay();
+
+            // Form submission
+            document.getElementById('predictionForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loading spinner
+                document.getElementById('loadingSpinner').style.display = 'block';
+                document.getElementById('resultsSection').style.display = 'none';
+                
+                // Collect all form data
+                const formData = {
+                    systole: parseFloat(document.getElementById('systole').value),
+                    diastole: parseFloat(document.getElementById('diastole').value),
+                    heart_rate: parseFloat(document.getElementById('heartRate').value),
+                    temperature: parseFloat(document.getElementById('temperature').value),
+                    weight: parseFloat(document.getElementById('weight').value),
+                    height: parseFloat(document.getElementById('height').value) / 100, // Convert to meters
+                    age: parseInt(document.getElementById('age').value),
+                    smoking_status: document.getElementById('smokingStatus').value,
+                    active_lifestyle: document.getElementById('activeLifestyle').value === 'true'
+                };
+
+                console.log('Data yang dikirim ke backend:', formData);
+
+                fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide loading spinner
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    
+                    if (!data.success) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+
+                    console.log('Data dari backend:', data);
+                    // Display results
+                    displayResults(data, formData);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    alert('Terjadi kesalahan saat memproses prediksi: ' + error.message);
+                });
+            });
+        });
+
+        function displayResults(data, formData) {
+            // Display vital signs
+            document.getElementById('displaySystole').textContent = formData.systole;
+            document.getElementById('displayDiastole').textContent = formData.diastole;
+            document.getElementById('displayHeartRate').textContent = formData.heart_rate;
+            document.getElementById('displayTemperature').textContent = formData.temperature;
+
+            // Display prediction result
+            const displayName = conditionDisplayNames[data.condition] || data.condition;
+            document.getElementById('predictionResult').textContent = displayName;
+            document.getElementById('confidenceResult').textContent = `${data.confidence_percent}%`;
+            
+            // Set condition badge
+            const conditionBadge = document.getElementById('conditionBadge');
+            conditionBadge.textContent = displayName;
+            conditionBadge.className = `condition-badge condition-${data.condition}`;
+            
+            // Set risk indicator
+            const riskResult = document.getElementById('riskResult');
+            riskResult.textContent = `Risiko ${data.risk_level}`;
+            riskResult.className = `risk-indicator risk-${data.risk_level}`;
+
+            // Set risk description
+            document.getElementById('riskDescription').textContent = data.risk_description;
+
+            // Display multiple probability charts
+            displayMultipleProbabilityChart(data.probabilities_percent);
+
+            // Display risk distribution
+            displayRiskDistribution(data);
+
+            // Display advice and recommendations
+            displayAdvice(data);
+
+            // Display risk factors and lifestyle - using formData karena backend mungkin tidak mengembalikan lifestyle_analysis
+            displayRiskAndLifestyle(data, formData);
+
+            // Set medical disclaimer
+            document.getElementById('medicalDisclaimer').textContent = data.medical_disclaimer;
+
+            // Apply alert styling for high risk
+            if (data.alert || data.risk_level === 'TINGGI' || data.risk_level === 'SANGAT_TINGGI') {
+                document.getElementById('predictionCard').classList.add('alert-high-risk');
+                document.getElementById('adviceCard').classList.add('alert-high-risk');
+                document.getElementById('medicalDisclaimerAlert').classList.add('alert-danger');
+            }
+
+            // Show results section
+            document.getElementById('resultsSection').style.display = 'block';
+
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function displayMultipleProbabilityChart(probabilities) {
+            const container = document.getElementById('multipleProbabilityChart');
+            container.innerHTML = '';
+
+            if (!probabilities || Object.keys(probabilities).length === 0) {
+                container.innerHTML = '<div class="alert alert-warning">Data probabilitas tidak tersedia</div>';
+                return;
+            }
+
+            // Sort probabilities by value (descending)
+            const sortedProbabilities = Object.entries(probabilities)
+                .sort(([,a], [,b]) => b - a);
+
+            for (const [label, prob] of sortedProbabilities) {
+                const displayName = conditionDisplayNames[label] || label;
+                const color = conditionColors[label] || '#6366f1';
+                
+                const probDiv = document.createElement('div');
+                probDiv.className = 'mb-3';
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'd-flex justify-content-between mb-1';
+                labelDiv.innerHTML = `
+                    <span class="fw-medium">${displayName}</span>
+                    <span class="fw-bold">${prob}%</span>
+                `;
+                
+                const progressBar = document.createElement('div');
+                progressBar.className = 'probability-bar';
+                
+                const progress = document.createElement('div');
+                progress.className = 'probability-fill';
+                progress.style.width = `${prob}%`;
+                progress.style.backgroundColor = color;
+                progress.textContent = prob >= 3 ? `${prob}%` : '';
+                
+                progressBar.appendChild(progress);
+                probDiv.appendChild(labelDiv);
+                probDiv.appendChild(progressBar);
+                container.appendChild(probDiv);
+            }
+        }
+
+        function displayRiskDistribution(data) {
+            const container = document.getElementById('riskDistributionCards');
+            container.innerHTML = '';
+
+            if (!data.probabilities_percent || Object.keys(data.probabilities_percent).length === 0) {
+                container.innerHTML = '<div class="col-12"><div class="alert alert-warning">Data distribusi risiko tidak tersedia</div></div>';
+                return;
+            }
+
+            // Create risk distribution cards based on probabilities
+            const sortedProbabilities = Object.entries(data.probabilities_percent)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 4); // Top 4 conditions
+
+            sortedProbabilities.forEach(([condition, prob]) => {
+                const displayName = conditionDisplayNames[condition] || condition;
+                const color = conditionColors[condition] || '#6366f1';
+                
+                const colDiv = document.createElement('div');
+                colDiv.className = 'col-md-3 mb-3';
+                
+                colDiv.innerHTML = `
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <div class="vital-value" style="color: ${color}">${prob}%</div>
+                            <div class="vital-unit">${displayName}</div>
+                            <small class="text-muted">Probabilitas</small>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(colDiv);
+            });
+        }
+
+        function displayAdvice(data) {
+            // Set urgency badge
+            const urgencyBadge = document.getElementById('urgencyBadge');
+            let urgencyLevel = 'low';
+            let urgencyText = 'Urgensi Rendah';
+            
+            if (data.risk_level === 'SANGAT_TINGGI') {
+                urgencyLevel = 'high';
+                urgencyText = 'Urgensi Sangat Tinggi';
+            } else if (data.risk_level === 'TINGGI') {
+                urgencyLevel = 'high';
+                urgencyText = 'Urgensi Tinggi';
+            } else if (data.risk_level === 'SEDANG') {
+                urgencyLevel = 'medium';
+                urgencyText = 'Urgensi Sedang';
+            }
+            
+            urgencyBadge.textContent = urgencyText;
+            urgencyBadge.className = `urgency-badge urgency-${urgencyLevel}`;
+            
+            // Set advice title and description
+            document.getElementById('adviceTitle').textContent = `Rekomendasi untuk Kondisi ${conditionDisplayNames[data.condition] || data.condition}`;
+            document.getElementById('adviceDescription').textContent = data.risk_description;
+            
+            // Display recommendations
+            const recommendationsList = document.getElementById('recommendationsList');
+            recommendationsList.innerHTML = '';
+            
+            if (data.recommendations && data.recommendations.length > 0) {
+                data.recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex align-items-start';
+                    li.innerHTML = `
+                        <i class="bi bi-check-circle text-success me-2 mt-1"></i>
+                        <span>${rec}</span>
+                    `;
+                    recommendationsList.appendChild(li);
+                });
+            } else {
+                // Default recommendations based on risk level
+                const defaultRecs = getDefaultRecommendations(data.risk_level, data.condition);
+                defaultRecs.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex align-items-start';
+                    li.innerHTML = `
+                        <i class="bi bi-check-circle text-success me-2 mt-1"></i>
+                        <span>${rec}</span>
+                    `;
+                    recommendationsList.appendChild(li);
+                });
+            }
+        }
+
+        function getDefaultRecommendations(riskLevel, condition) {
+            const baseRecommendations = {
+                'SANGAT_TINGGI': [
+                    "SEGERA konsultasi dengan dokter atau kardiologis",
+                    "Monitor tekanan darah dan denyut jantung setiap 2 jam",
+                    "Hindari aktivitas fisik berat dan stres",
+                    "Siapkan akses ke fasilitas gawat darurat",
+                    "Minum obat sesuai resep dokter jika ada"
+                ],
+                'TINGGI': [
+                    "Konsultasi dengan dokter dalam 24-48 jam",
+                    "Monitor tekanan darah 2 kali sehari",
+                    "Kurangi asupan garam dan lemak jenuh",
+                    "Tingkatkan aktivitas fisik ringan secara bertahap",
+                    "Kelola stres dengan teknik relaksasi"
+                ],
+                'SEDANG': [
+                    "Konsultasi dokter untuk evaluasi rutin",
+                    "Monitor tekanan darah mingguan",
+                    "Pertahankan diet seimbang dan rendah garam",
+                    "Olahraga teratur 3-5 kali per minggu",
+                    "Hindari rokok dan batasi alkohol"
+                ],
+                'RENDAH': [
+                    "Pertahankan gaya hidup sehat",
+                    "Monitor tekanan darah bulanan",
+                    "Olahraga teratur dan diet seimbang",
+                    "Lakukan pemeriksaan kesehatan tahunan",
+                    "Kelola berat badan ideal"
+                ]
+            };
+
+            // Add condition-specific recommendations
+            const conditionSpecific = {
+                'HYPERTENSION_STAGE2': ["Pantau tekanan darah ketat", "Minum obat antihipertensi sesuai resep"],
+                'HYPERTENSION_STAGE1': ["Batasi asupan garam <5g/hari", "Tingkatkan konsumsi buah dan sayur"],
+                'TACHYCARDIA': ["Hindari kafein dan stimulan", "Lakukan teknik pernapasan dalam"],
+                'BRADYCARDIA': ["Konsultasi kardiologis", "Monitor denyut jantung harian"]
+            };
+
+            const recommendations = [...baseRecommendations[riskLevel]];
+            if (conditionSpecific[condition]) {
+                recommendations.push(...conditionSpecific[condition]);
+            }
+
+            return recommendations;
+        }
+
+        function displayRiskAndLifestyle(data, formData) {
+            // Display risk factors
+            const riskFactors = document.getElementById('riskFactors');
+            riskFactors.innerHTML = '';
+            
+            const factors = generateRiskFactors(data, formData);
+            factors.forEach(factor => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex align-items-center';
+                li.innerHTML = `
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    ${factor}
+                `;
+                riskFactors.appendChild(li);
+            });
+
+            // Display lifestyle profile - menggunakan formData karena data lifestyle mungkin tidak dikembalikan backend
+            const lifestyleProfile = document.getElementById('lifestyleProfile');
+            lifestyleProfile.innerHTML = '';
+
+            const lifestyleItems = generateLifestyleProfile(formData);
+            lifestyleItems.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span>${item.label}</span>
+                    <span class="badge bg-primary rounded-pill">${item.value}</span>
+                `;
+                lifestyleProfile.appendChild(li);
+            });
+        }
+
+        function generateRiskFactors(data, formData) {
+            const factors = [];
+            
+            // Blood pressure factors
+            if (formData.systole >= 180 || formData.diastole >= 120) {
+                factors.push("Krisis Hipertensi (SANGAT BERBAHAYA)");
+            } else if (formData.systole >= 140 || formData.diastole >= 90) {
+                factors.push("Hipertensi Stage 2");
+            } else if (formData.systole >= 130 || formData.diastole >= 80) {
+                factors.push("Hipertensi Stage 1");
+            } else if (formData.systole >= 120) {
+                factors.push("Pre-hipertensi");
+            }
+            
+            // Heart rate factors
+            if (formData.heart_rate > 120) {
+                factors.push("Tachycardia Berat");
+            } else if (formData.heart_rate > 100) {
+                factors.push("Tachycardia Ringan");
+            } else if (formData.heart_rate < 40) {
+                factors.push("Bradycardia Berat");
+            } else if (formData.heart_rate < 60) {
+                factors.push("Bradycardia Ringan");
+            }
+
+            // Temperature factors
+            if (formData.temperature > 38.0) {
+                factors.push("Demam - dapat mempengaruhi denyut jantung");
+            }
+
+            // Lifestyle factors
+            if (formData.smoking_status === 'current') {
+                factors.push("Perokok Aktif - meningkatkan risiko kardiovaskular");
+            } else if (formData.smoking_status === 'former') {
+                factors.push("Mantan Perokok - risiko masih meningkat");
+            }
+
+            if (!formData.active_lifestyle) {
+                factors.push("Gaya hidup sedentari - meningkatkan risiko");
+            }
+
+            // BMI factors
+            if (formData.weight && formData.height) {
+                const bmi = formData.weight / (formData.height * formData.height);
+                if (bmi >= 30) {
+                    factors.push("Obesitas - faktor risiko signifikan");
+                } else if (bmi >= 25) {
+                    factors.push("Overweight - meningkatkan risiko");
+                }
+            }
+
+            // Age factors
+            if (formData.age >= 60) {
+                factors.push("Usia lanjut - risiko kardiovaskular meningkat");
+            } else if (formData.age >= 45) {
+                factors.push("Usia paruh baya - risiko mulai meningkat");
+            }
+            
+            // Multiple conditions risk
+            if (data.probabilities_percent) {
+                const highProbConditions = Object.entries(data.probabilities_percent)
+                    .filter(([_, prob]) => prob > 30)
+                    .map(([condition, _]) => conditionDisplayNames[condition]);
+                
+                if (highProbConditions.length > 1) {
+                    factors.push(`Multiple kondisi risiko: ${highProbConditions.join(', ')}`);
+                }
+            }
+
+            return factors.length > 0 ? factors : ["Tidak ada faktor risiko signifikan yang teridentifikasi"];
+        }
+
+        function generateLifestyleProfile(formData) {
+            const items = [];
+            
+            // Calculate BMI from weight and height
+            if (formData.weight && formData.height) {
+                const bmi = formData.weight / (formData.height * formData.height);
+                const bmiCategory = getBMICategory(bmi);
+                items.push({
+                    label: 'Index Massa Tubuh (BMI)',
+                    value: `${bmi.toFixed(1)} (${bmiCategory.category})`
+                });
+            }
+
+            // Add age
+            if (formData.age) {
+                let ageGroup = 'Dewasa Muda';
+                if (formData.age >= 45) ageGroup = 'Paruh Baya';
+                if (formData.age >= 60) ageGroup = 'Lansia';
+                items.push({
+                    label: 'Usia',
+                    value: `${formData.age} tahun (${ageGroup})`
+                });
+            }
+
+            // Add smoking status
+            const smokingStatus = {
+                'never': 'Tidak Merokok',
+                'former': 'Mantan Perokok', 
+                'current': 'Perokok Aktif'
+            };
+            items.push({
+                label: 'Status Merokok',
+                value: smokingStatus[formData.smoking_status] || 'Tidak Diketahui'
+            });
+
+            // Add activity level
+            items.push({
+                label: 'Aktivitas Fisik',
+                value: formData.active_lifestyle ? 'Aktif' : 'Sedentari'
+            });
+
+            return items;
+        }
+
+        function newAnalysis() {
+            // Reset form
+            document.getElementById('predictionForm').reset();
+            
+            // Set default values
+            document.getElementById('weight').value = '70';
+            document.getElementById('height').value = '170';
+            document.getElementById('age').value = '35';
+            
+            // Hide results
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            // Remove alert styling
+            document.getElementById('predictionCard').classList.remove('alert-high-risk');
+            document.getElementById('adviceCard').classList.remove('alert-high-risk');
+            document.getElementById('medicalDisclaimerAlert').classList.remove('alert-danger');
+            
+            // Update BMI display
+            updateBMIDisplay();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Add some sample data for testing dangerous scenario
+        function fillDangerousSampleData() {
+            document.getElementById('systole').value = '180';
+            document.getElementById('diastole').value = '110';
+            document.getElementById('heartRate').value = '120';
+            document.getElementById('temperature').value = '38.5';
+            document.getElementById('weight').value = '90';
+            document.getElementById('height').value = '170';
+            document.getElementById('age').value = '55';
+            document.getElementById('smokingStatus').value = 'current';
+            document.getElementById('activeLifestyle').value = 'false';
+            updateBMIDisplay();
+        }
+
+        // Uncomment the line below to enable dangerous sample data filling for testing
+        fillDangerousSampleData();
+    </script>
+</body>
+</html>
